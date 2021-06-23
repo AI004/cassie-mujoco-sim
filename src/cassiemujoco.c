@@ -1963,6 +1963,8 @@ void cassie_vis_record_frame(cassie_vis_t *sim){
     if(!sim || !sim->window)
         return;
 
+    sim->cam.type =  mjCAMERA_FIXED;
+    sim->cam.fixedcamid = 0;
     mjrRect viewport = {0, 0, 0, 0};
 
     glfwGetFramebufferSize_fp(sim->window, &viewport.width, &viewport.height);
@@ -2577,9 +2579,9 @@ cassie_vis_t *cassie_vis_init(cassie_sim_t* c, const char* modelfile) {
     sensorinit(v);
     grfinit(v);
     // Set up mujoco visualization objects
-    // v->cam.type = mjCAMERA_FIXED;
+    v->cam.type = mjCAMERA_FREE;
     // v->cam.fixedcamid = 0;
-    mjv_defaultCamera_fp(&v->cam);
+    // mjv_defaultCamera_fp(&v->cam);
     mjv_defaultOption_fp(&v->opt);
     v->opt.flags[11] = 1;//v->opt.flags[12];    // Render applied forces
     mjr_defaultContext_fp(&v->con);
