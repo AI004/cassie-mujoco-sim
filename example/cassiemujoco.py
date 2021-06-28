@@ -16,7 +16,6 @@ from cassiemujoco_ctypes import *
 import os
 import ctypes
 import numpy as np
-
 # from envs.terrains.rand import *
 
 # Get base directory
@@ -586,6 +585,17 @@ class CassieVis:
 
     def record_frame(self):
         cassie_vis_record_frame(self.v)
+
+    def record_depth(self):
+        depth = (ctypes.c_double * 307200)()
+        cassie_vis_record_depth(self.v, depth)
+        ret = np.zeros(307200)
+        for i in range(307200):
+            ret[i] = depth[i]
+        # qwe = ret.reshape((1,480,640,1))
+        # plt.imshow(np.flip(qwe[0,:,:,0],0), cmap='hot', interpolation='nearest')
+        # plt.show()
+        return ret
 
     def close_video_recording(self):
         cassie_vis_close_recording(self.v)

@@ -547,6 +547,10 @@ cassie_vis_record_frame = _libraries['./libcassiemujoco.so'].cassie_vis_record_f
 cassie_vis_record_frame.restype = None
 cassie_vis_record_frame.argtypes = [POINTER_T(struct_cassie_vis)]
 
+cassie_vis_record_depth = _libraries['./libcassiemujoco.so'].cassie_vis_record_depth
+cassie_vis_record_depth.restype = None
+cassie_vis_record_depth.argtypes = [POINTER_T(struct_cassie_vis), ctypes.c_double * 307200]
+
 cassie_vis_close_recording = _libraries['./libcassiemujoco.so'].cassie_vis_close_recording
 cassie_vis_close_recording.restype = None
 cassie_vis_close_recording.argtypes = [POINTER_T(struct_cassie_vis)]
@@ -1028,6 +1032,6 @@ __all__ = \
     'cassie_sim_get_joint_filter',  'cassie_sim_get_drive_filter', 
     'cassie_sim_torque_delay', 'cassie_sim_set_torque_delay', 'drive_filter_t', 'joint_filter_t',
     'cassie_sim_params', 'cassie_sim_nv', 'cassie_sim_nbody', 'cassie_sim_nq', 'cassie_sim_ngeom',
-    'cassie_vis_record_frame', 'cassie_vis_init_recording', 'cassie_vis_close_recording']
+    'cassie_vis_record_frame', 'cassie_vis_init_recording', 'cassie_vis_close_recording','cassie_vis_record_depth']
 
 

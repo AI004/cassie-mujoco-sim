@@ -53,6 +53,9 @@ static int right_foot_body_id;
 // Globals for visualization
 static int fontscale = mjFONTSCALE_200;
 static unsigned char *frame;
+static unsigned char *depth_frame;
+static float *depth_raw;
+static double *depth_raw_double;
 mjvFigure figsensor;
 
 
@@ -1963,8 +1966,6 @@ void cassie_vis_record_frame(cassie_vis_t *sim){
     if(!sim || !sim->window)
         return;
 
-    sim->cam.type =  mjCAMERA_FIXED;
-    sim->cam.fixedcamid = 0;
     mjrRect viewport = {0, 0, 0, 0};
 
     glfwGetFramebufferSize_fp(sim->window, &viewport.width, &viewport.height);
@@ -1985,6 +1986,31 @@ void cassie_vis_record_frame(cassie_vis_t *sim){
         fwrite(frame, 1, sim->video_width*sim->video_height*3, sim->pipe_video_out); 
     }
 }
+
+void cassie_vis_record_depth(cassie_vis_t *sim, double depth_array[307200]){
+    if(!sim || !sim->window)
+        return;
+    sim->cam.type =  mjCAMERA_FIXED;
+    sim->cam.fixedcamid = 0;
+    mjrRect viewport = {0, 0, 0, 0};
+    glfwGetFramebufferSize_fp(sim->window, &viewport.width, &viewport.height);
+    mjr_readPixels_fp(NULL, depth_raw, viewport, &sim->con);
+    // for( int r=0; r<480; r+=1 )
+    //         for( int c=0; c<640; c+=1 )
+    //         {
+    //             int adr = r*640 + c;
+    //             depth_frame[adr] = depth_frame[adr+1] = depth_frame[adr+2] =
+    //                 (unsigned char)((1.0f-depth_raw[adr])*255.0f);
+    //         }
+    //Write frame to output pipe
+    for (int i=0;i<307200;i+=1)
+    {
+        depth_raw_double[i]=(double)depth_raw[i];
+    }
+    mju_copy_fp(depth_array,depth_raw_double,307200);
+}
+
+
 
 void cassie_vis_close_recording(cassie_vis_t *sim){
     if (sim->pipe_video_out){
@@ -2569,7 +2595,7 @@ cassie_vis_t *cassie_vis_init(cassie_sim_t* c, const char* modelfile) {
     memset(v->perturb_force, 0.0, 6*sizeof(double));
 
     // Create window
-    v->window = glfwCreateWindow_fp(1200, 900, "Cassie", NULL, NULL);
+    v->window = glfwCreateWindow_fp(640, 480, "Cassie", NULL, NULL);
     glfwMakeContextCurrent_fp(v->window);
     glfwSwapInterval_fp(0);
 

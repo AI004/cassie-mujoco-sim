@@ -305,6 +305,9 @@ void cassie_vis_init_recording(cassie_vis_t *sim, const char* videofile, int wid
 //Record Current frame
 void cassie_vis_record_frame(cassie_vis_t *sim);
 
+//Record depth
+void cassie_vis_record_depth(cassie_vis_t *sim, double depth_array[307200]);
+
 // close a video renderer
 void cassie_vis_close_recording(cassie_vis_t *sim);
 
