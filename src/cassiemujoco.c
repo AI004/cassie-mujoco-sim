@@ -53,10 +53,14 @@ static int right_foot_body_id;
 // Globals for visualization
 static int fontscale = mjFONTSCALE_200;
 static unsigned char *frame;
-static unsigned char *depth_frame;
+//static unsigned char *depth_frame;
 static float *depth_raw;
-static double *depth_raw_double;
+//static double *depth_raw_double;
 mjvFigure figsensor;
+float znear;
+float zfar;
+float extent1;
+mjrRect viewport={0,0,320,240};
 
 
 /*******************************************************************************
@@ -111,7 +115,9 @@ mjvFigure figsensor;
     X(mjr_render)                               \
     X(mjr_overlay)                              \
     X(mjr_figure)                               \
-    X(mjr_readPixels)
+    X(mjr_readPixels)                           \
+    X(mjr_setBuffer)                            \
+    X(mjr_maxViewport)
 
 // Loaded GLFW functions
 #define GLFW_FUNCTION_LIST                      \
@@ -141,7 +147,8 @@ mjvFigure figsensor;
     X(glfwMaximizeWindow)                       \
     X(glfwSetWindowShouldClose)                 \
     X(glfwWindowShouldClose)                    \
-    X(glfwSetWindowSize)
+    X(glfwSetWindowSize)                        \
+    X(glfwWindowHint)
 
 // Dynamic object handles
 static void *mj_handle;
@@ -1987,28 +1994,25 @@ void cassie_vis_record_frame(cassie_vis_t *sim){
     }
 }
 
-void cassie_vis_record_depth(cassie_vis_t *sim, double depth_array[307200]){
-    if(!sim || !sim->window)
-        return;
-    sim->cam.type =  mjCAMERA_FIXED;
-    sim->cam.fixedcamid = 0;
-    mjrRect viewport = {0, 0, 0, 0};
-    glfwGetFramebufferSize_fp(sim->window, &viewport.width, &viewport.height);
-    mjr_readPixels_fp(NULL, depth_raw, viewport, &sim->con);
-    // for( int r=0; r<480; r+=1 )
-    //         for( int c=0; c<640; c+=1 )
-    //         {
-    //             int adr = r*640 + c;
-    //             depth_frame[adr] = depth_frame[adr+1] = depth_frame[adr+2] =
-    //                 (unsigned char)((1.0f-depth_raw[adr])*255.0f);
-    //         }
-    //Write frame to output pipe
-    for (int i=0;i<307200;i+=1)
-    {
-        depth_raw_double[i]=(double)depth_raw[i];
-    }
-    mju_copy_fp(depth_array,depth_raw_double,307200);
-}
+// void cassie_vis_record_depth(cassie_vis_t *sim, double depth_array[307200]){
+//     if(!sim || !sim->window)
+//         return;
+//     // get size of active renderbuffer
+    
+//     // for( int r=0; r<480; r+=1 )
+//     //         for( int c=0; c<640; c+=1 )
+//     //         {
+//     //             int adr = r*640 + c;
+//     //             depth_frame[adr] = depth_frame[adr+1] = depth_frame[adr+2] =
+//     //                 (unsigned char)((1.0f-depth_raw[adr])*255.0f);
+//     //         }
+//     //Write frame to output pipe
+//     // for (int i=0;i<307200;i+=1)
+//     // {
+//     //     depth_raw_double[i]=(double)depth_raw[i];
+//     // }
+//     // mju_copy_fp(depth_array,depth_raw_double,307200);
+// }
 
 
 
@@ -2595,7 +2599,7 @@ cassie_vis_t *cassie_vis_init(cassie_sim_t* c, const char* modelfile) {
     memset(v->perturb_force, 0.0, 6*sizeof(double));
 
     // Create window
-    v->window = glfwCreateWindow_fp(640, 480, "Cassie", NULL, NULL);
+    v->window = glfwCreateWindow_fp(1200, 900, "Cassie", NULL, NULL);
     glfwMakeContextCurrent_fp(v->window);
     glfwSwapInterval_fp(0);
 
@@ -2605,9 +2609,9 @@ cassie_vis_t *cassie_vis_init(cassie_sim_t* c, const char* modelfile) {
     sensorinit(v);
     grfinit(v);
     // Set up mujoco visualization objects
-    v->cam.type = mjCAMERA_FREE;
+    // v->cam.type = mjCAMERA_FIXED;
     // v->cam.fixedcamid = 0;
-    // mjv_defaultCamera_fp(&v->cam);
+    mjv_defaultCamera_fp(&v->cam);
     mjv_defaultOption_fp(&v->opt);
     v->opt.flags[11] = 1;//v->opt.flags[12];    // Render applied forces
     mjr_defaultContext_fp(&v->con);
@@ -2627,6 +2631,90 @@ cassie_vis_t *cassie_vis_init(cassie_sim_t* c, const char* modelfile) {
 
     return v;
 }
+
+cassie_vis_t *cassie_vis_init2(cassie_sim_t* c, const char* modelfile) {
+    // Make sure MuJoCo is initialized and the model is loaded
+    if (!mujoco_initialized) {
+        printf("vis mujoco not init\n");
+        if (!cassie_mujoco_init(modelfile)) {
+            printf("mujoco not init\n");
+            return NULL;
+        }
+    }
+
+    if (!glfw_initialized) {
+        printf("glfw not init\n");
+        return NULL;
+    }
+    // Allocate visualization structure
+    cassie_vis_t *v = malloc(sizeof (cassie_vis_t));
+    // Set interaction ctrl vars
+    v->m = c->m;
+    v->d = c->d;
+    v->perturb_body = 1;
+    memset(v->perturb_force, 0.0, 6*sizeof(double));
+    glfwWindowHint_fp(GLFW_VISIBLE, 0);
+    glfwWindowHint_fp(GLFW_DOUBLEBUFFER, GLFW_FALSE);
+    // Create window
+    v->window = glfwCreateWindow_fp(320, 240, "Invisible Window", NULL, NULL);
+
+    glfwMakeContextCurrent_fp(v->window);
+    //Comment next line
+    //glfwSwapInterval_fp(0);
+
+    //printf("Refresh Rate: %i\n", v->refreshrate);
+    //printf("Resolution: %ix%i\n", 1200, 900);
+
+    sensorinit(v);
+    grfinit(v);
+    // Set up mujoco visualization objects
+    v->cam.type = mjCAMERA_FIXED;
+    v->cam.fixedcamid = 0;
+    // mjv_defaultCamera_fp(&v->cam);
+    mjv_defaultOption_fp(&v->opt);
+    v->opt.flags[11] = 1;//v->opt.flags[12];    // Render applied forces
+    mjr_defaultContext_fp(&v->con);
+    mjv_defaultScene_fp(&v->scn);
+    mjv_makeScene_fp(c->m, &v->scn, 2000);
+    mjr_makeContext_fp(c->m, &v->con, 200);
+
+    // comment next lines, we are doing offscreen rendering
+    // Set callback for user-initiated window close events
+    //glfwSetWindowUserPointer_fp(v->window, v);
+    //glfwSetWindowCloseCallback_fp(v->window, window_close_callback);
+
+    // Set glfw callbacks
+    // glfwSetCursorPosCallback_fp(v->window, mouse_move);
+    // glfwSetMouseButtonCallback_fp(v->window, mouse_button);
+    // glfwSetScrollCallback_fp(v->window, scroll);
+    // glfwSetKeyCallback_fp(v->window, key_callback);
+    // frame = (unsigned char*)malloc(3*width*height);
+    //depth_raw_double = (double*)malloc(sizeof(double)*width*height);
+    //depth_frame = (unsigned char*)malloc(3*width*height);
+    // center and scale view
+    v->cam.lookat[0] = c->m->stat.center[0];
+    v->cam.lookat[1] = c->m->stat.center[1];
+    v->cam.lookat[2] = c->m->stat.center[2];
+    v->cam.distance = c->m->stat.extent;
+    zfar = c->m->vis.map.zfar;
+    znear = c->m->vis.map.znear;
+    extent1 = c->m->stat.extent;
+    // set rendering to offscreen buffer
+    mjr_setBuffer_fp(mjFB_OFFSCREEN, &v->con);
+    // get size of active renderbuffer
+    // viewport =  mjr_maxViewport_fp(&v->con);
+    // viewport = {0, 0, 320, 240};
+    
+    int W = viewport.width;
+    int H = viewport.height;
+    printf(" W : %d\n",W);
+    printf(" H : %d\n",H);
+    depth_raw = (float*)malloc(sizeof(float)*W*H);
+    
+    return v;
+}
+
+
 
 
 void cassie_vis_close(cassie_vis_t *v)
@@ -2810,6 +2898,19 @@ bool cassie_vis_draw(cassie_vis_t *v, cassie_sim_t *c)
     return true;
 }
 
+bool cassie_vis_draw2(cassie_vis_t *v, cassie_sim_t *c)
+{
+    mj_forward_fp(v->m, v->d);
+    mjv_updateScene_fp(c->m, c->d, &v->opt, &v->pert, &v->cam, mjCAT_ALL, &v->scn);
+    mjr_render_fp(viewport, &v->scn, &v->con);
+    mjr_readPixels_fp(NULL, depth_raw, viewport, &v->con);
+    return true;
+}
+
+float* cassie_vis_get_depth()
+{
+    return depth_raw;
+}
 
 bool cassie_vis_valid(cassie_vis_t *v)
 {
@@ -2902,3 +3003,4 @@ void cassie_set_state(cassie_sim_t *c, const cassie_state_t *s)
     // Copy pointer types
     CASSIE_COPY_POINTER(c, s);
 }
+

@@ -16,6 +16,8 @@ from cassiemujoco_ctypes import *
 import os
 import ctypes
 import numpy as np
+import ipdb as pdb
+import matplotlib.pyplot as plt
 # from envs.terrains.rand import *
 
 # Get base directory
@@ -586,22 +588,58 @@ class CassieVis:
     def record_frame(self):
         cassie_vis_record_frame(self.v)
 
-    def record_depth(self):
-        depth = (ctypes.c_double * 307200)()
-        cassie_vis_record_depth(self.v, depth)
-        ret = np.zeros(307200)
-        for i in range(307200):
-            ret[i] = depth[i]
-        # qwe = ret.reshape((1,480,640,1))
-        # plt.imshow(np.flip(qwe[0,:,:,0],0), cmap='hot', interpolation='nearest')
-        # plt.show()
-        return ret
+    # def record_depth(self):
+    #     depth = (ctypes.c_double * 307200)()
+    #     cassie_vis_record_depth(self.v, depth)
+    #     ret = np.zeros(307200)
+    #     for i in range(307200):
+    #         ret[i] = depth[i]
+    #     # qwe = ret.reshape((1,480,640,1))
+    #     # plt.imshow(np.flip(qwe[0,:,:,0],0), cmap='hot', interpolation='nearest')
+    #     # plt.show()
+    #     return ret
 
     def close_video_recording(self):
         cassie_vis_close_recording(self.v)
 
     def __del__(self):
         cassie_vis_free(self.v)
+
+class CassieVis2:
+    def __init__(self, c):
+        self.v = cassie_vis_init2(c.c, c.modelfile.encode('utf-8'))
+        self.depth = np.zeros((480,640),dtype=np.float32)
+    def draw(self, c):
+        state = cassie_vis_draw2(self.v, c.c)
+        #pdb.set_trace()
+        return state
+
+    def get_depth(self):
+        depth_ptr = cassie_vis_get_depth()
+        # for i in range(307200):
+        #     print(self.depth[i])
+        #pdb.set_trace()
+        depth = np.ctypeslib.as_array(depth_ptr, shape=(76800,)).reshape((1,240,320,1))
+        #plt.imshow(np.flip(depth[0,:,:,0],0), cmap='hot', interpolation='nearest')
+        #plt.show()
+
+        return depth
+
+    # Applies the inputted force to the inputted body. "xfrc_apply" should contain the force/torque to 
+    # apply in Cartesian coords as a 6-long array (first 3 are force, last 3 are torque). "body_name" 
+    # should be a string matching a body name in the XML file. If "body_name" doesn't match an existing
+    # body name, then no force will be applied. 
+    def apply_force(self, xfrc_apply, body_name):
+        xfrc_array = (ctypes.c_double * 6)()
+        for i in range(len(xfrc_apply)):
+            xfrc_array[i] = xfrc_apply[i]
+        cassie_vis_apply_force(self.v, xfrc_array, body_name.encode())
+
+    def __del__(self):
+        cassie_vis_free(self.v)
+
+
+
 
 class CassieUdp:
     def __init__(self, remote_addr='127.0.0.1', remote_port='25000',
@@ -682,3 +720,15 @@ class CassieUdp:
 
     def __del__(self):
         udp_close(self.sock)
+
+if __name__ == '__main__':
+    sim = CassieSim()
+    vis = CassieVis()
+
+    vis.start_video_recording("abc",640,480)
+    start = time.time() 
+    #data = vis.record_frame()
+    end = time.time()
+    time_el = end - start
+    print(data.shape)
+    print(time_el)

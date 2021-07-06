@@ -36,6 +36,8 @@ typedef struct cassie_state cassie_state_t;
 extern "C" {
 #endif
 
+float* get_depth();
+
 cassie_out_t cassie_sim_get_cassie_out(cassie_sim_t *c);
 
 // Pass a null-terminated string containing the path to the directory
@@ -257,6 +259,11 @@ void cassie_vis_set_cam(cassie_vis_t* v, const char* body_name, double zoom, dou
 // parameter NULL.
 cassie_vis_t *cassie_vis_init(cassie_sim_t *sim, const char* modelfile);
 
+// Creates an instance of the Cassie simulation visualizer. If called
+// before cassie_mujoco_init, cassie_mujoco_init is called with the
+// parameter NULL. version 2
+cassie_vis_t *cassie_vis_init2(cassie_sim_t *sim, const char* modelfile);
+
 // Closes the visualization window without freeing the instance. After
 // calling this, cassie_vis_draw can still be called, but the
 // visualizer will remain closed.
@@ -267,6 +274,9 @@ void cassie_vis_free(cassie_vis_t *vis);
 
 // Visualizes the state of the given Cassie simulator.
 bool cassie_vis_draw(cassie_vis_t *vis, cassie_sim_t *sim);
+
+// Visualizes the state of the given Cassie simulator. (OFFscreen rendering)
+bool cassie_vis_draw2(cassie_vis_t *vis, cassie_sim_t *sim);
 
 // Returns true if the visualizer has been closed but not freed.
 bool cassie_vis_valid(cassie_vis_t *vis);
@@ -305,8 +315,8 @@ void cassie_vis_init_recording(cassie_vis_t *sim, const char* videofile, int wid
 //Record Current frame
 void cassie_vis_record_frame(cassie_vis_t *sim);
 
-//Record depth
-void cassie_vis_record_depth(cassie_vis_t *sim, double depth_array[307200]);
+// //Record depth
+// void cassie_vis_record_depth(cassie_vis_t *sim, double depth_array[307200]);
 
 // close a video renderer
 void cassie_vis_close_recording(cassie_vis_t *sim);
