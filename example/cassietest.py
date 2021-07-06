@@ -19,6 +19,8 @@ from cassiemujoco_ctypes import joint_filter_t, drive_filter_t
 import time
 import numpy as np
 import math
+import ipdb as pdb
+import ctypes
 
 def euler2quat(z=0, y=0, x=0):
 
@@ -41,9 +43,9 @@ def euler2quat(z=0, y=0, x=0):
     return result
 
 # Initialize cassie simulation
-sim = CassieSim("../model/cassie.xml")
+sim = CassieSim("../model/cassie_depth.xml")
 # sim.set_body_mass(10, name="load_mass")
-print(sim.nq)
+#print(sim.nq)
 # curr_qpos = sim.qpos()
 # curr_qpos[35] = 1
 # sim.set_qpos(curr_qpos)
@@ -146,8 +148,8 @@ print(sim.nq)
 # sim.set_hfield_data(data.flatten())
 # hfield_data = sim.get_hfield_data()
 # print(hfield_data)
-vis = CassieVis(sim)
-
+vis = CassieVis2(sim)
+#print(dir(vis))
 
 # sim.set_hfield_size([100, 100, .15, .001])
 # print(sim.get_hfield_size())
@@ -179,8 +181,7 @@ count = 0
 # sim.set_geom_friction([.1, 1e-3, 1e-4], "floor")
 
 # Run until window is closed or vis is quit
-draw_state = vis.draw(sim)
-vis.start_video_recording("pyVideoTest", 1280, 720)
+#draw_state = vis.draw(sim)
 feet_vel = np.zeros(12)
 rfoot_quat = np.zeros(4)
 rfoot_body_quat = np.zeros(4)
@@ -189,43 +190,52 @@ pel_vel = np.zeros(6)
 # sim.set_body_mass(5, name="right-foot")
 # vis.set_cam("cassie-pelvis", 3, 90, -20)
 # (90,0) size view
-vis.init_recording("./test_vid")
-while draw_state:# and draw_state2:
-    if not vis.ispaused():
-        # if 50 < count < 80:
-        #     vis.apply_force([0, 0, 500, 0, 0, 0], "cassie-pelvis")
-        #     print("applying force", count)
-        # else:
-        #     vis.apply_force([0, 0, 0, 0, 0, 0], "cassie-pelvis")
-        for i in range(60):
-            y = sim.step_pd(u)
-        # sim.hold()
-        # qpos = np.array(sim.qpos_full())
-        # qvel = np.array(sim.qvel_full())
-        # print("mass: ", qpos[0:2] - qpos[35:37])
-        # print(qpos[35:38])
-        # print("pel z:", qpos[2])
-        # print("left foot quat: ", sim.xquat("left-foot"))
-        # qvel = sim.qvel()
-        # sim.foot_vel(feet_vel)
-        # sim.foot_quat(rfoot_quat)
-        # rfoot_body_quat = sim.xquat("right-foot")
-        # sim.body_vel(pel_vel, 'cassie-pelvis')
-        # print("r foot quat: ", rfoot_quat)
-        # print("rfoot_body_quat: ", rfoot_body_quat)
-        # print("state est quat: ", y.rightFoot.orientation[:])
-        # print("left foot vel: ", feet_vel[3:6])
-        # print("right foot vel: ", feet_vel[9:12])
-        # print("state est vel: ", y.rightFoot.footTranslationalVelocity[:])
-        # print("diff: ", np.linalg.norm(feet_vel[9:12]-y.rightFoot.footTranslationalVelocity[:]))
-        # print("pel com vel: ", pel_vel[3:])
-        # print("pel qvel: ", qvel[0:3])
-        # print("state est pel vel: ", y.pelvis.translationalVelocity[:])
-        # print("diff: ", np.linalg.norm(np.array(y.pelvis.translationalVelocity[:])-qvel[0:3]))
-        # count += 1
+# vis.start_video_recording("./test_vid",640,480)
+while True:# and draw_state2:
 
+    # if 50 < count < 80:
+    #     vis.apply_force([0, 0, 500, 0, 0, 0], "cassie-pelvis")
+    #     print("applying force", count)
+    # else:
+    #     vis.apply_force([0, 0, 0, 0, 0, 0], "cassie-pelvis")
+    for i in range(60):
+        y = sim.step_pd(u)
+    # sim.hold()
+    # qpos = np.array(sim.qpos_full())
+    # qvel = np.array(sim.qvel_full())
+    # print("mass: ", qpos[0:2] - qpos[35:37])
+    # print(qpos[35:38])
+    # print("pel z:", qpos[2])
+    # print("left foot quat: ", sim.xquat("left-foot"))
+    # qvel = sim.qvel()
+    # sim.foot_vel(feet_vel)
+    # sim.foot_quat(rfoot_quat)
+    # rfoot_body_quat = sim.xquat("right-foot")
+    # sim.body_vel(pel_vel, 'cassie-pelvis')
+    # print("r foot quat: ", rfoot_quat)
+    # print("rfoot_body_quat: ", rfoot_body_quat)
+    # print("state est quat: ", y.rightFoot.orientation[:])
+    # print("left foot vel: ", feet_vel[3:6])
+    # print("right foot vel: ", feet_vel[9:12])
+    # print("state est vel: ", y.rightFoot.footTranslationalVelocity[:])
+    # print("diff: ", np.linalg.norm(feet_vel[9:12]-y.rightFoot.footTranslationalVelocity[:]))
+    # print("pel com vel: ", pel_vel[3:])
+    # print("pel qvel: ", qvel[0:3])
+    # print("state est pel vel: ", y.pelvis.translationalVelocity[:])
+    # print("diff: ", np.linalg.norm(np.array(y.pelvis.translationalVelocity[:])-qvel[0:3]))
+    # count += 1
+
+    
+    #pdb.set_trace()
+    #vis.record_frame()
+    start = time.time()
     draw_state = vis.draw(sim)
-    vis.record_frame()
+    depth = vis.get_depth()
+    end = time.time()
+    print(end-start)
+    #break
+    
+    #pdb.set_trace()
     # draw_state2 = vis2.draw(sim2)
 
     # while time.monotonic() - t < 1/60:
@@ -233,4 +243,4 @@ while draw_state:# and draw_state2:
     # vis.close_video_recording()
     # t = time.monotonic()
 
-vis.close_recording()
+#vis.close_video_recording()

@@ -608,21 +608,16 @@ class CassieVis:
 class CassieVis2:
     def __init__(self, c):
         self.v = cassie_vis_init2(c.c, c.modelfile.encode('utf-8'))
-        self.depth = np.zeros((480,640),dtype=np.float32)
+    
     def draw(self, c):
         state = cassie_vis_draw2(self.v, c.c)
-        #pdb.set_trace()
         return state
 
     def get_depth(self):
         depth_ptr = cassie_vis_get_depth()
-        # for i in range(307200):
-        #     print(self.depth[i])
-        #pdb.set_trace()
         depth = np.ctypeslib.as_array(depth_ptr, shape=(76800,)).reshape((1,240,320,1))
         #plt.imshow(np.flip(depth[0,:,:,0],0), cmap='hot', interpolation='nearest')
         #plt.show()
-
         return depth
 
     # Applies the inputted force to the inputted body. "xfrc_apply" should contain the force/torque to 
@@ -721,14 +716,14 @@ class CassieUdp:
     def __del__(self):
         udp_close(self.sock)
 
-if __name__ == '__main__':
-    sim = CassieSim()
-    vis = CassieVis()
+# if __name__ == '__main__':
+#     sim = CassieSim()
+#     vis = CassieVis()
 
-    vis.start_video_recording("abc",640,480)
-    start = time.time() 
-    #data = vis.record_frame()
-    end = time.time()
-    time_el = end - start
-    print(data.shape)
-    print(time_el)
+#     vis.start_video_recording("abc",640,480)
+#     start = time.time() 
+#     #data = vis.record_frame()
+#     end = time.time()
+#     time_el = end - start
+#     print(data.shape)
+#     print(time_el)

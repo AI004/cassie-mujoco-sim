@@ -19,7 +19,6 @@ from cassiemujoco_ctypes import joint_filter_t, drive_filter_t
 import time
 import numpy as np
 import math
-import ipdb as pdb
 import ctypes
 
 def euler2quat(z=0, y=0, x=0):
